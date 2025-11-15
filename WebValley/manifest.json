@@ -1,0 +1,10 @@
+{
+  "Name": "WebValley",
+  "Author": "Zamecki",
+  "Version": "0.0.1",
+  "Description": "A WebSocket connection manager for Stardew Valley",
+  "UniqueID": "zamecki.webvalley",
+  "EntryDll": "webvalley.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
+}

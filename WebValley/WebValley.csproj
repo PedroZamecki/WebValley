@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <!--
+          GamePath selection strategy:
+          1. Honor an explicit MSBuild property or environment variable named 'GamePath' (e.g. set GAMEPATH or pass /p:GamePath=... when building).
+          2. If not provided, try common OS-specific install locations (Linux Steam, Windows Steam, Windows (x86) Steam, common GOG path).
+          This keeps your repo free of machine-specific paths while still working out-of-the-box on typical setups.
+        -->
+        <!-- Use existing value (from env or CLI) if present. Otherwise, detect common locations. -->
+        <GamePath Condition=" '$(GamePath)' == '' and Exists('$(HOME)/.local/share/Steam/steamapps/common/Stardew Valley')">$(HOME)/.local/share/Steam/steamapps/common/Stardew Valley</GamePath>
+        <GamePath Condition=" '$(GamePath)' == '' and Exists('$(ProgramFiles)\\Steam\\steamapps\\common\\Stardew Valley')">$(ProgramFiles)\\Steam\\steamapps\\common\\Stardew Valley</GamePath>
+        <GamePath Condition=" '$(GamePath)' == '' and Exists('$(ProgramFiles(x86))\\Steam\\steamapps\\common\\Stardew Valley')">$(ProgramFiles(x86))\\Steam\\steamapps\\common\\Stardew Valley</GamePath>
+        <GamePath Condition=" '$(GamePath)' == '' and Exists('C:\\GOG Games\\Stardew Valley')">C:\\GOG Games\\Stardew Valley</GamePath>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
+    </ItemGroup>
+
+    <!-- Design-time reference for IDEs: if a GamePath is found (or set via /p:GamePath or env), point the IDE to the game's StardewModdingAPI.dll so editor features resolve SMAPI types.
+         This block is conditional on DesignTimeBuild or BuildingInsideVisualStudio so it won't affect normal command-line builds or the deployed mod. -->
+    <ItemGroup Condition="Exists('$(GamePath)') and ( '$(DesignTimeBuild)' == 'true' or '$(BuildingInsideVisualStudio)' == 'true' )">
+      <Reference Include="StardewModdingAPI">
+        <HintPath>$(GamePath)/StardewModdingAPI.dll</HintPath>
+        <Private>false</Private>
+      </Reference>
+    </ItemGroup>
+
+</Project>
