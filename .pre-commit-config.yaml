@@ -1,0 +1,54 @@
+# Pre-commit hooks for WebValley
+# See https://pre-commit.com for more information
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: local
+    hooks:
+      # Restore dotnet tools
+      - id: dotnet-tool-restore
+        name: Restore .NET tools
+        entry: dotnet tool restore
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+
+      # Format code with dotnet-format
+      - id: dotnet-format
+        name: Format .NET code
+        entry: dotnet format --verify-no-changes
+        language: system
+        types: [c#]
+        pass_filenames: false
+        stages: [commit]
+
+      # Build the project
+      - id: dotnet-build
+        name: Build .NET project
+        entry: dotnet build --no-restore
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+
+      # Run tests
+      - id: dotnet-test
+        name: Run .NET tests
+        entry: dotnet test --no-build
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+
+  # Optional: Add trailing whitespace and end-of-file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+

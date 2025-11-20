@@ -3,13 +3,13 @@
   <PropertyGroup>
     <!-- Treat all warnings as errors -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    
+
     <!-- Enable all analyzer rules (aggressive analysis) -->
     <AnalysisMode>All</AnalysisMode>
-    
+
     <!-- Enforce code style in build -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    
+
     <!-- Enable nullable reference types -->
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -21,5 +21,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <!-- Automatically install pre-commit hooks on build or restore -->
+  <Target Name="InstallPreCommitHooks" BeforeTargets="BeforeBuild;BeforeRestore">
+    <Exec Command="sh $(MSBuildThisFileDirectory)install-hooks.sh"
+          Condition="Exists('$(MSBuildThisFileDirectory).git')"
+          IgnoreExitCode="true"
+          ContinueOnError="true" />
+  </Target>
 </Project>
 
