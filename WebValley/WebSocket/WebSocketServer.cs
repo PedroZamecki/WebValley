@@ -4,11 +4,12 @@ using StardewModdingAPI;
 
 namespace WebValley.WebSocket
 {
-    /// <summary>A simple WebSocket echo server for the mod.</summary>
+    /// <summary>A simple WebSocket server for the mod that processes commands.</summary>
     internal sealed class WebSocketServer : IDisposable
     {
         private readonly IMonitor _monitor;
         private readonly string _uri;
+        private readonly ICommandHandler _commandHandler;
         private HttpListener? _httpListener;
         private CancellationTokenSource? _cancellationTokenSource;
         private Task? _serverTask;
@@ -17,10 +18,12 @@ namespace WebValley.WebSocket
         /// Initializes a new instance of the <see cref="WebSocketServer"/> class.
         /// </summary>
         /// <param name="monitor">The SMAPI monitor for logging.</param>
+        /// <param name="commandHandler">The command handler for processing messages.</param>
         /// <param name="uri">The URI to listen on for WebSocket connections.</param>
-        public WebSocketServer(IMonitor monitor, string uri = "http://localhost:8080/")
+        public WebSocketServer(IMonitor monitor, ICommandHandler commandHandler, string uri = "http://localhost:8080/")
         {
             _monitor = monitor;
+            _commandHandler = commandHandler;
             _uri = uri;
         }
 
@@ -128,7 +131,7 @@ namespace WebValley.WebSocket
             }
         }
 
-        /// <summary>Handle a WebSocket connection and echo messages.</summary>
+        /// <summary>Handle a WebSocket connection and process commands.</summary>
         private async Task HandleWebSocketAsync(System.Net.WebSockets.WebSocket webSocket, CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[1024 * 4];
@@ -151,13 +154,18 @@ namespace WebValley.WebSocket
                     }
                     else if (result.MessageType == WebSocketMessageType.Text)
                     {
-                        // Echo the message back
+                        // Parse the message and handle the command
+                        string messageText = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
+                        string response = _commandHandler.HandleCommand(messageText);
+
+                        byte[] responseBuffer = System.Text.Encoding.UTF8.GetBytes(response);
                         await webSocket.SendAsync(
-                            new ArraySegment<byte>(buffer, 0, result.Count),
+                            new ArraySegment<byte>(responseBuffer),
                             WebSocketMessageType.Text,
-                            result.EndOfMessage,
+                            true,
                             cancellationToken).ConfigureAwait(false);
-                        _monitor.Log($"Echoed message: {System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count)}", LogLevel.Debug);
+
+                        _monitor.Log($"Processed command: {messageText} -> {response}", LogLevel.Debug);
                     }
                 }
             }

@@ -51,7 +51,7 @@ namespace WebValley
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
             _webSocketServer?.Dispose();
-            _webSocketServer = new WebSocketServer(this.Monitor);
+            _webSocketServer = new WebSocketServer(this.Monitor, new GameCommandHandler(this.Monitor));
             _webSocketServer.Start();
         }
     }
