@@ -5,14 +5,19 @@ using StardewModdingAPI;
 namespace WebValley.WebSocket
 {
     /// <summary>A simple WebSocket echo server for the mod.</summary>
-    internal sealed class WebSocketServer
+    internal sealed class WebSocketServer : IDisposable
     {
+        private readonly IMonitor _monitor;
+        private readonly string _uri;
         private HttpListener? _httpListener;
         private CancellationTokenSource? _cancellationTokenSource;
         private Task? _serverTask;
-        private readonly IMonitor _monitor;
-        private readonly string _uri;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WebSocketServer"/> class.
+        /// </summary>
+        /// <param name="monitor">The SMAPI monitor for logging.</param>
+        /// <param name="uri">The URI to listen on for WebSocket connections.</param>
         public WebSocketServer(IMonitor monitor, string uri = "http://localhost:8080/")
         {
             _monitor = monitor;
@@ -44,6 +49,7 @@ namespace WebValley.WebSocket
                 _monitor.Log($"Failed to start WebSocket server: {ex.Message}", LogLevel.Error);
                 _httpListener?.Close();
                 _httpListener = null;
+                throw;
             }
         }
 
@@ -62,7 +68,7 @@ namespace WebValley.WebSocket
 
                 if (_serverTask != null)
                 {
-                    await _serverTask;
+                    await _serverTask.ConfigureAwait(false);
                 }
 
                 _httpListener.Stop();
@@ -74,7 +80,16 @@ namespace WebValley.WebSocket
             catch (Exception ex)
             {
                 _monitor.Log($"Error stopping WebSocket server: {ex.Message}", LogLevel.Error);
+                throw;
             }
+        }
+
+        /// <summary>Dispose of resources.</summary>
+        public void Dispose()
+        {
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource?.Dispose();
+            _httpListener?.Close();
         }
 
         /// <summary>Accept incoming WebSocket connections and handle them.</summary>
@@ -108,6 +123,7 @@ namespace WebValley.WebSocket
                 catch (Exception ex)
                 {
                     _monitor.Log($"Error accepting WebSocket connection: {ex.Message}", LogLevel.Error);
+                    throw;
                 }
             }
         }
@@ -123,16 +139,14 @@ namespace WebValley.WebSocket
                 {
                     WebSocketReceiveResult result = await webSocket.ReceiveAsync(
                         new ArraySegment<byte>(buffer),
-                        cancellationToken
-                    ).ConfigureAwait(false);
+                        cancellationToken).ConfigureAwait(false);
 
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
                         await webSocket.CloseAsync(
                             WebSocketCloseStatus.NormalClosure,
                             "Closing",
-                            cancellationToken
-                        ).ConfigureAwait(false);
+                            cancellationToken).ConfigureAwait(false);
                         _monitor.Log("Client disconnected from WebSocket.", LogLevel.Debug);
                     }
                     else if (result.MessageType == WebSocketMessageType.Text)
@@ -142,8 +156,7 @@ namespace WebValley.WebSocket
                             new ArraySegment<byte>(buffer, 0, result.Count),
                             WebSocketMessageType.Text,
                             result.EndOfMessage,
-                            cancellationToken
-                        ).ConfigureAwait(false);
+                            cancellationToken).ConfigureAwait(false);
                         _monitor.Log($"Echoed message: {System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count)}", LogLevel.Debug);
                     }
                 }
@@ -155,6 +168,7 @@ namespace WebValley.WebSocket
             catch (Exception ex)
             {
                 _monitor.Log($"Error handling WebSocket: {ex.Message}", LogLevel.Error);
+                throw;
             }
             finally
             {
@@ -163,4 +177,3 @@ namespace WebValley.WebSocket
         }
     }
 }
-

@@ -47,3 +47,12 @@ dotnet_diagnostic.SA0001.severity = none
 # CA1812: Internal class is apparently never instantiated (SMAPI instantiates mods via reflection)
 dotnet_diagnostic.CA1812.severity = none
 
+# CA1031: Do not catch general exception types (intentional for resilient mod behavior)
+dotnet_diagnostic.CA1031.severity = warning
+
+# CA2007: Consider calling ConfigureAwait (not needed for SMAPI mods)
+dotnet_diagnostic.CA2007.severity = none
+
+# CA1001: Types that own disposable fields should be disposable (WebSocketServer lifecycle managed by mod)
+dotnet_diagnostic.CA1001.severity = warning
+
