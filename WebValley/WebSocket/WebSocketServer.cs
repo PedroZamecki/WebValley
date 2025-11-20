@@ -33,10 +33,10 @@ namespace WebValley.WebSocket
                 _httpListener = new HttpListener();
                 _httpListener.Prefixes.Add(_uri);
                 _httpListener.Start();
-                
+
                 _cancellationTokenSource = new CancellationTokenSource();
                 _serverTask = AcceptWebSocketConnectionsAsync(_cancellationTokenSource.Token);
-                
+
                 _monitor.Log($"WebSocket server started at {_uri}", LogLevel.Info);
             }
             catch (Exception ex)
@@ -59,7 +59,7 @@ namespace WebValley.WebSocket
             try
             {
                 _cancellationTokenSource?.Cancel();
-                
+
                 if (_serverTask != null)
                 {
                     await _serverTask;
@@ -97,7 +97,7 @@ namespace WebValley.WebSocket
                     System.Net.WebSockets.WebSocket webSocket = webSocketContext.WebSocket;
 
                     _monitor.Log("Client connected to WebSocket.", LogLevel.Debug);
-                    
+
                     // Handle this connection in a separate task
                     _ = HandleWebSocketAsync(webSocket, cancellationToken);
                 }
